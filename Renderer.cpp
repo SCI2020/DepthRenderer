@@ -4,12 +4,15 @@
 #include "shader/depth_vs.h"
 #include "shader/depth_frag.h"
 
-Renderer::Renderer(const float near, const float far)
-	: mNear(near),
-	mFar(far),
+#pragma warning(disable : 4267)
+
+Renderer::Renderer()
+	: mNear(0.01f),
+	mFar(10000.f),
 	mnMeshes(0),
 	mVertexArray(nullptr),
 	mVertexBuffer(nullptr),
+	mVLocation(-1),
 	mVPLocation(-1),
 	mModelMatrix(0.0f),
 	mViewMatrix(0.0f),
@@ -20,6 +23,7 @@ Renderer::Renderer(const float near, const float far)
 	mShader = Shader(mVertexCode, mFragmentCode);
 
 	// uniform variable location
+	mVLocation = glGetUniformLocation(mShader.ID, "V");
 	mVPLocation = glGetUniformLocation(mShader.ID, "VP");
 	mTextureLocation = glGetUniformLocation(mShader.ID, "fTexture");
 }
@@ -118,6 +122,7 @@ void Renderer::Render(void)
 	// Compute the MVP matrix from camera
 	glm::mat4 VP = mProjectMatrix * mViewMatrix;
 	glUniformMatrix4fv(mVPLocation, 1, GL_FALSE, &VP[0][0]);
+	glUniformMatrix4fv(mVLocation, 1, GL_FALSE, &mViewMatrix[0][0]);
 
 	// Upload default near and far
 	glUniform1f(glGetUniformLocation(mShader.ID, "near"), mNear);

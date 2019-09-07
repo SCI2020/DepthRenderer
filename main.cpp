@@ -1,9 +1,11 @@
 #include <iostream>
-#define GLEW_STATIC
-#include <GL\glew.h>
-#include <GLFW\glfw3.h>
-#include <opencv2/opencv.hpp>
 #include <iomanip>
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <opencv2/opencv.hpp>
+#include <boost/program_options.hpp>
+
 #include "Renderer.h"
 #include "common/CommonIO.hpp"
 
@@ -15,6 +17,7 @@ namespace {
 	// window dimensions
 	int WINDOW_WIDTH = 0;
 	int WINDOW_HEIGHT = 0;
+	const string OUTPUT_DIR = "output\\image";
 
 	// create opengl context and a window of given size
 	void InitGLContext(int window_width, int window_height);
@@ -26,23 +29,45 @@ namespace {
 
 int main(int argc, char **argv)
 {
+	/* Parse command line options */
+	namespace po = boost::program_options;
 	std::string GeometryFileName = "";
 	std::string IntrinsicFileName = "";
 	std::string ExtrinsicFileName = "";
-	float near = 0.0f;
-	float far = 1000.0f;
 
-	std::cout << "Geometry file (*.obj): ";
-	std::cin >> GeometryFileName;
-	std::cout << "Extrinsic file (extrinsics.txt): ";
-	std::cin >> ExtrinsicFileName;
-	std::cout << "Intrinsic file (intrinsics.txt): ";
-	std::cin >> IntrinsicFileName;
-	std::cout << "Near: ";
-	std::cin >> near;
-	std::cout << "Far: ";
-	std::cin >> far;
+	// Declare the supported options
+	po::options_description desc("Allowed options");
+	desc.add_options()
+		("help,h", "display help message")
+		("geometry,g", po::value<string>(&GeometryFileName), "geometry file (*.obj)")
+		("extrinsic,e", po::value<string>(&ExtrinsicFileName), "extrinsics (*.txt)")
+		("intrinsic,i", po::value<string>(&IntrinsicFileName), "intrinsics (*.txt)")
+		;
 
+	po::variables_map vm;
+	po::store(po::parse_command_line(argc, argv, desc), vm);
+	po::notify(vm);
+
+	if (vm.count("help")) {
+		cout << desc << endl;
+		return 1;
+	}
+	if (!vm.count("geometry")) {
+		cerr << "Missing geometry" << endl << desc << endl;;
+		return 1;
+	}
+	if (!vm.count("extrinsic")) {
+		cerr << "Missing extrinsic" << endl << desc << endl;;
+		return 1;
+	}
+	if (!vm.count("intrinsic")) {
+		cerr << "Missing intrinsic" << endl << desc << endl;;
+		return 1;
+	}
+
+	cout << "geometry  : " << GeometryFileName << endl;
+	cout << "extrinsic : " << ExtrinsicFileName << endl;
+	cout << "intrinsic : " << IntrinsicFileName << endl;
 
 	try {
 		// set up mesh and texture
@@ -65,7 +90,7 @@ int main(int argc, char **argv)
 		InitGLContext(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 		// set up renderer
-		Renderer renderer(near, far);
+		Renderer renderer;
 		renderer.SetGeometries(std::vector<Geometry>(1, geometry));
 
 		// screen shot buffer
@@ -89,7 +114,7 @@ int main(int argc, char **argv)
 			renderer.ScreenShot(buffer, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 			std::ostringstream oss;
 			oss.fill('0');
-			oss << "output/images/" << setw(4) << camIdx << ".png";
+			oss << OUTPUT_DIR << "/" << setw(4) << camIdx << ".png";
 			WriteImage(buffer, WINDOW_WIDTH, WINDOW_HEIGHT, oss.str());
 			// jump to next camera
 			camIdx++; 
@@ -104,13 +129,15 @@ int main(int argc, char **argv)
 	catch (std::exception &e) {
 		std::cerr << "Catch exception: " << e.what() << endl;
 	}
+
+	return 0;
 }
 
 namespace {
 	void InitGLContext(int width, int height)
 	{
 		glfwInit();
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 		glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
@@ -132,7 +159,7 @@ namespace {
 	{
 		system("rmdir output /S/Q");
 		system("mkdir output");
-		system("mkdir output\\images");
+		system( (string("mkdir ") + OUTPUT_DIR).c_str());
 	}
 
 	void WriteImage(unsigned char *data, int width, int height, string filename)
@@ -141,8 +168,21 @@ namespace {
 			return;
 		}
 
-		cv::Mat image(cv::Size(width, height), CV_8UC3, data);
-		cv::cvtColor(image, image, CV_RGB2BGR);
+		cv::Mat image(height, width, CV_16U);
+		unsigned char *src = data;
+		uint16_t *dst = image.ptr<uint16_t>();
+
+		// decode color-coded depth
+		for (int i = 0; i < width * height; ++i) {
+			uint8_t cr = *src;
+			uint8_t cg = *(src + 1);
+			//uint8_t cb = *(src + 2);
+
+			*dst = static_cast<uint16_t>((int)cr + ((int)cg << 8));
+			dst++;
+			src += 3;
+		}
+
 		cv::flip(image, image, 0);
 		cv::imwrite(filename, image);
 	}

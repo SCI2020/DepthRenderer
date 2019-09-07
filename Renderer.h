@@ -1,9 +1,11 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include <GL/glew.h>
-#include <glm/glm.hpp>
 #include <string>
+
+#include <glm/glm.hpp>
+#include <GL/glew.h>
+
 #include "mesh/Geometry.hpp"
 #include "common/Shader.hpp"
 #include "camera/Camera.hpp"
@@ -11,7 +13,7 @@
 class Renderer
 {
 public:
-	Renderer(const float near, const float far);
+	Renderer();
 	virtual ~Renderer();
 
 	void Render(void);
@@ -41,6 +43,7 @@ private:
 	GLuint *mElementBuffer;
 
 	/* attrib/uniform location */
+	GLuint mVLocation;
 	GLuint mVPLocation;
 	GLuint mTextureLocation;
 
