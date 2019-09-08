@@ -7,7 +7,7 @@ find_package(glm REQUIRED)
 find_package(OpenCV COMPONENTS imgcodecs REQUIRED)
 find_package(OpenCV COMPONENTS highgui REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(Boost COMPONENTS program_options)
+find_package(Boost COMPONENTS program_options filesystem)
 
 add_executable(
 	DepthRendering 

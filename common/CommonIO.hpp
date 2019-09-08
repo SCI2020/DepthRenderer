@@ -10,61 +10,28 @@
 class CommonIO
 {
 public:
-	CommonIO();
-
 	/**
-	 * Read list file which have the following format:
-	 *	<index:int>	<value:string>
-	 * Entry with same index will overwrite previous entry
-	 * empty string is set if no such index is found
-	 *
-	 * @param filename	The name of list file
-	 * @param container	A string container to store list values
-	 * @param addPrefix	Indicate whether final value is prefixed. For example,
-	 *					if addPrefix is true, filename is '/Users/x/config.txt' 
-	 *					and the list contains
-	 *						0	0000.jpg
-	 *					The final output value will be '/Users/x/0000.jpg'.
-	 *					Otherwise, the output value is '0000.jpg'
-	 *
-	 *	@return The number of entries found
-	 */
-	static int ReadList(const std::string &filename, std::vector<std::string> &,
-		bool addPrefix=false);
-	static int WriteList(const std::string &filename,
-		const std::vector<std::string>&);
-
-	/**
-	* Read intrinsic list file which have the following format:
-	*	<index:int> <fx:double>  <fy:double>  <cx:double>  <cy:double>  <imgw:double>  <imgh:double>
-	* Entry with same index will overwrite previous entry
-	* nullptr is set if no such line is found
+	* Read intrinsic file stored in OpenCV xml format. The intrinsic matrix
+	* should be denoted 'M'. Camera size are passed manually.
 	*
-	* @param filename	The name of list file
-	* @param container	A container to store intrisics
+	* @param filename	The xml file
+	* @param width	camera width
+	* @param height	camera height
 	*
-	* @return	The number of intrinsic entries found
+	* @return	The Intrinsic
 	*/
-	static int ReadIntrinsic(const std::string &filename, 
-		std::vector<Intrinsic> &container);
-	static int WriteIntrinsic(const std::string &filename,
-		const std::vector<Intrinsic> &);
+	static Intrinsic ReadIntrinsic(const std::string &filename, int width, int height);
 
 	/**
-	* Read extrinsic list file which have the following format:
-	*	<index:int>  <up:vec3> <dir:vec3> <pos:vec3>
-	* Entry with same index will overwrite previous entry
-	* nullptr is set if no such line is found
+	* Read extrinsic file stored in OpenCV xml format. The file should contain
+	* a 3x3 'R' matrix and a 3x1 'T' matrix in world2camera fashion.
+	* Note camera y-axis is assumed to align width image coordinates
 	*
-	* @param filename	The name of list file
-	* @param container	A container to store extrinsics
+	* @param filename	The xml file
 	*
-	* @return	The number of extrinsics entries found
+	* @return	The Extrinsic
 	*/
-	static int ReadExtrinsic(const std::string &, 
-		std::vector<Extrinsic> &container);
-	static int WriteExtrinsic(const std::string &,
-		const std::vector<Extrinsic> &);
+	static Extrinsic ReadExtrinsic(const std::string &);
 };
 
 #include "CommonIO.inl"
