@@ -103,14 +103,14 @@ int main(int argc, char **argv)
 		}
 
 		// set up mesh and texture
-		Geometry geometry = Geometry::FromObj(GeometryFileName);
+		vector<Geometry> geometry = Geometry::FromObj(GeometryFileName);
 
 		// Initialize OpenGL context
 		InitGLContext(CAMERA_WIDTH, CAMERA_HEIGHT);
 
 		// set up renderer
 		Renderer renderer;
-		renderer.SetGeometries(std::vector<Geometry>(1, geometry));
+		renderer.SetGeometries(geometry);
 
 		// screen shot buffer
 		unsigned char *buffer = new unsigned char[CAMERA_HEIGHT*CAMERA_WIDTH*3]();

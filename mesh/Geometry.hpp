@@ -16,7 +16,7 @@ class Geometry
 public:
 	Geometry();
 
-	static Geometry FromObj(const std::string &filename);
+	static std::vector<Geometry> FromObj(const std::string &filename);
 
 	inline DrawOption GetDrawOption(void) const { 
 		return mDrawOption; 
